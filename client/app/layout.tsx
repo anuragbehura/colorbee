@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ColorBee",
-  description: "Modern documentation site layout",
+  title: "ColorBee🐝 - Your Community-Driven Color Palette Platform",
+  description: "A vibrant web application that helps developers and designers discover, create, and share beautiful color combinations. ColorBee makes it easy to explore curated color palettes, copy hex codes with a single click, and contribute your own palettes to our growing collection.",
 };
 
 export default function RootLayout({

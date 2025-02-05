@@ -1,9 +1,10 @@
-import Image from "next/image";
+import ColorPalletes from "@/components/ColorPalletes";
+// import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="flex items-center justify-center">
-      Hello
+    <div className="">
+      <ColorPalletes colors={[]} likes={0} timeAgo={""} />
     </div>
   );
 }

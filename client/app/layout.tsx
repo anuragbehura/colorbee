@@ -4,6 +4,8 @@ import "./globals.css";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { Navbar } from "@/components/Navbar";
 import { RightSidebar } from "@/components/RightSidebar";
+import LoadingBar from "@/components/LoadingBar";
+import AppProvider from "@/redux/Provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,34 +28,40 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html suppressHydrationWarning={true} lang="en" className="h-full">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full`}>
-        {/* Navbar fixed at the top */}
-        <div className="fixed top-0 z-50 w-full bg-white">
-          <Navbar />
-        </div>
 
-        {/* Main container with correct padding-top to account for fixed navbar */}
-        <div className="flex h-screen pt-16">
-          {/* Left sidebar - fixed position with independent scroll */}
-          <div className="fixed left-0 w-52 h-[calc(100vh-64px)] border-r">
-            <div className="h-full overflow-y-auto scrollbar-none">
-              <LeftSidebar />
-            </div>
+        {/* LoadingBar */}
+        <LoadingBar />
+        <AppProvider>
+
+          {/* Navbar fixed at the top */}
+          <div className="fixed top-0 z-50 w-screen bg-white">
+            <Navbar />
           </div>
 
-          {/* Main content - with left and right margin for sidebars */}
-          <main className="flex-1 ml-64 mr-64 min-h-screen overflow-y-auto">
-            <div className="container max-w-3xl mx-auto py-6 px-8">
-              {children}
+          {/* Main container with correct padding-top to account for fixed navbar */}
+          <div className="flex h-screen pt-16">
+            {/* Left sidebar - fixed position with independent scroll */}
+            <div className="fixed left-0 w-52 h-[calc(100vh-64px)] border-r">
+              <div className="h-full overflow-y-auto scrollbar-none">
+                <LeftSidebar />
+              </div>
             </div>
-          </main>
 
-          {/* Right sidebar - fixed position */}
-          <div className="fixed right-0 w-80 h-[calc(100vh-64px)] border-l">
-            <RightSidebar />
+            {/* Main content - with left and right margin for sidebars */}
+            <main className="flex-1 ml-64 mr-64 min-h-screen overflow-y-auto">
+              <div className="container max-w-3xl mx-auto py-6 px-8">
+                {children}
+              </div>
+            </main>
+
+            {/* Right sidebar - fixed position */}
+            <div className="fixed right-0 w-80 h-[calc(100vh-64px)] border-l">
+              <RightSidebar />
+            </div>
           </div>
-        </div>
+        </AppProvider>
       </body>
     </html>
   );

@@ -1,33 +1,84 @@
-import React from "react";
-import { Heart } from "lucide-react";
-import { Button } from "./ui/button";
+import React, { useEffect } from 'react';
+import { formatDistanceToNow } from "date-fns";
+import { Heart } from 'lucide-react';
+import { Button } from './ui/button';
+import { useDispatch } from 'react-redux';
+import { likeColorPalette, fetchColorPaletteById } from '@/redux/slice/colorSlice';
+import { useUser } from '@/hooks/useUser';
+import { AppDispatch } from '@/redux/store';
 
-interface PaletteProps {
+interface ColorPaletteProps {
+    id: string;
     colors: string[];
     likes: number;
-    timeAgo: string;
+    isLiked: boolean;
+    createdAt: string;
 }
 
-const ColorPalettes: React.FC<PaletteProps> = ({ colors, likes, timeAgo }) => {
+const ColorPalette: React.FC<ColorPaletteProps> = ({
+    id,
+    colors,
+    likes,
+    isLiked: initialIsLiked,
+    createdAt
+}) => {
+    const dispatch = useDispatch<AppDispatch>();
+    const timeAgo = formatDistanceToNow(new Date(createdAt));
+    const userToken = useUser();
+
+    // Fetch initial like status when component mounts
+    useEffect(() => {
+        if (userToken) {
+            dispatch(fetchColorPaletteById(id));
+        }
+    }, [dispatch, id, userToken]);
+
+    const handleLike = async () => {
+        if (userToken) {
+            try {
+                await dispatch(likeColorPalette({
+                    paletteId: id,
+                    userToken
+                })).unwrap();
+            } catch (error) {
+                console.error('Failed to update like:', error);
+            }
+        }
+    };
+
     return (
-        <div className="max-w-[190px] mx-auto">
-            {/* Color Palette */}
-            <div className="w-full h-[180px] rounded-2xl overflow-hidden shadow-md border">
+        <div className="w-full max-w-sm">
+            {/* Color display */}
+            <div className="aspect-square rounded-lg overflow-hidden mb-2">
                 {colors.map((color, index) => (
-                    <div key={index} className="h-[45px]" style={{ backgroundColor: color }} />
+                    <div
+                        key={index}
+                        style={{ backgroundColor: color }}
+                        className="w-full h-1/4"
+                    />
                 ))}
             </div>
 
-            {/* Like & Time */}
-            <div className="flex justify-between items-center mt-2 text-sm text-gray-600">
-                <Button variant={"ghost"} className="flex items-center space-x-1">
-                    <Heart size={16} className="text-gray-500 cursor-pointer" />
-                    <span>{likes}</span>
+            {/* Interaction footer */}
+            <div className="flex items-center justify-between px-1">
+                <Button
+                    onClick={handleLike}
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2 p-0 hover:bg-transparent"
+                >
+                    <Heart
+                        size={16}
+                        fill={initialIsLiked ? 'red' : 'none'}
+                        color={initialIsLiked ? 'red' : 'currentColor'}
+                        className="transition-colors duration-200"
+                    />
+                    <span className="text-sm">{likes}</span>
                 </Button>
-                <span>{timeAgo}</span>
+                <span className="text-sm text-gray-500">{timeAgo}</span>
             </div>
         </div>
     );
 };
 
-export default ColorPalettes;
+export default ColorPalette;

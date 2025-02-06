@@ -5,6 +5,7 @@ interface IColor extends Document {
     userId: mongoose.Types.ObjectId;
     colors: string[];
     likes: number;
+    isLiked: boolean;
     createdAt: Date;
 }
 
@@ -24,9 +25,10 @@ const colorSchema = new Schema<IColor>(
             type: Number,
             default: 0,
         },
-        // createdAt: {
-        //     type: Date
-        // }
+        isLiked:{
+            type: Boolean,
+            default: false
+        }
     },
     { timestamps: true }
 );

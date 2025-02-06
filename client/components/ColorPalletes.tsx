@@ -47,7 +47,7 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
     };
 
     return (
-        <div className="w-full max-w-sm">
+        <div className="w-[250px] max-w-sm">
             {/* Color display */}
             <div className="aspect-square rounded-lg overflow-hidden mb-2">
                 {colors.map((color, index) => (
@@ -63,14 +63,14 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
             <div className="flex items-center justify-between px-1">
                 <Button
                     onClick={handleLike}
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="flex items-center gap-2 p-0 hover:bg-transparent"
+                    className="flex items-center gap-2 p-0 hover:bg-transparent px-4 rounded-lg"
                 >
                     <Heart
-                        size={16}
-                        fill={initialIsLiked ? 'red' : 'none'}
-                        color={initialIsLiked ? 'red' : 'currentColor'}
+                        size={22}
+                        fill={initialIsLiked ? 'black' : 'none'}
+                        color={initialIsLiked ? 'black' : 'currentColor'}
                         className="transition-colors duration-200"
                     />
                     <span className="text-sm">{likes}</span>

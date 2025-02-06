@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { addColor, getAllColorPalettes } from "../controllers/color.controller";
+import { addColor, getAllColorPalettes, getColorPaletteById, likeColorPalette } from "../controllers/color.controller";
 
 export const router = express.Router();
 
@@ -9,6 +9,14 @@ router.post("/add-color", async (req: Request, res: Response) => {
 
 router.get("/get-all-colors", async (req: Request, res: Response) => {
     await getAllColorPalettes(req, res);
+});
+
+router.get("/:id", async (req: Request, res: Response) => {
+    await getColorPaletteById(req, res);
+});
+
+router.post("/:id/like", async (req: Request, res: Response) => {
+    await likeColorPalette(req, res);
 });
 
 export default router;

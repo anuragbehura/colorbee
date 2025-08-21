@@ -5,7 +5,7 @@ import { LeftSidebar } from "@/components/LeftSidebar";
 import { Navbar } from "@/components/Navbar";
 import { RightSidebar } from "@/components/RightSidebar";
 import LoadingBar from "@/components/LoadingBar";
-import AppProvider from "@/redux/Provider";
+import { Provider } from "@/api/provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +33,7 @@ export default function RootLayout({
 
         {/* LoadingBar */}
         <LoadingBar />
-        <AppProvider>
+        <Provider>
 
           {/* Navbar fixed at the top */}
           <div className="fixed top-0 z-50 w-screen bg-white">
@@ -61,7 +61,7 @@ export default function RootLayout({
               <RightSidebar />
             </div>
           </div>
-        </AppProvider>
+        </Provider>
       </body>
     </html>
   );

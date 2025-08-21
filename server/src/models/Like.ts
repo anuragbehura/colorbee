@@ -16,6 +16,9 @@ const LikeSchema = new mongoose.Schema<ILike>({
         type: String,
         required: true
     },
+    // likedPalletes: {
+    //     type:
+    // },
     createdAt: {
         type: Date,
         default: Date.now

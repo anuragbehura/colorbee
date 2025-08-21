@@ -1,63 +1,70 @@
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchColorPalettes, likeColorPalette } from "@/redux/slice/colorSlice"
 import ColorPalletes from "@/components/ColorPalletes";
-import { AppDispatch, RootState } from "@/redux/store"
 import { useUser } from "@/hooks/useUser";
+import { Loader2, AlertCircle } from "lucide-react";
+import { useInView } from "react-intersection-observer"
+import { useColorQuery } from "@/hooks/useColorQuery";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
-  const dispatch = useDispatch<AppDispatch>();
   const userToken = useUser();
+  const {ref, inView} = useInView();
+  const { toast } = useToast();
+  
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    isLoading,
+  } = useColorQuery().useColorPalletes();
 
-  // Get palettes from the redux store
-  const { palettes = [], loading, error, totalPages } = useSelector((state: RootState) => state.colorPalettes);
-
-  // State for tracking pagination
-  const [page, setPage] = useState(1);
-  const limit = 10;
-  const hasMore = page < totalPages;
-
-  // Update useEffect to use page and limit variables
   useEffect(() => {
-    if (userToken) {
-      dispatch(fetchColorPalettes({
-        page,
-        limit,
-        userToken
-      }));
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-  }, [dispatch, page, limit, userToken]);
+  }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  // Observer to detect when user reaches the bottom
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastPaletteRef = useCallback(
-    (node: HTMLDivElement) => {
-      if (loading || !hasMore) return;
+  useEffect(() => {
+    if(error) {
+      toast({
+        title: "Error",
+        description: "Failed to load Color Palletes"
+      })
+    }
+  }, [error]);
 
-      if (observer.current) observer.current.disconnect();
+  const allColorPalletes = data?.pages.flatMap((page: any) => page.palettes) || [];
+  
 
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setPage((prevPage) => prevPage + 1);
-        }
-      });
 
-      if (node) observer.current.observe(node);
-    },
-    [loading, hasMore]
-  );
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="animate-spin text-blue-500 w-12 h-12" />
+      </div>
+    );
+  }
 
-  if (!Array.isArray(palettes)) {
-    return <div>Loading...</div>;
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen text-red-500">
+        <AlertCircle className="w-12 h-12" />
+        <p className="mt-2 text-lg font-semibold">Something went wrong!</p>
+        <p className="text-sm">{error instanceof Error ? error.message : "Unknown error"}</p>
+      </div>
+    );
   }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {palettes.map((palette, index) => (
+      {allColorPalletes.map((palette, index) => (
         <div
           key={palette.id}
-          ref={index === palettes.length - 1 ? lastPaletteRef : null}
+          ref={index === allColorPalletes.length - 1 ? ref : null}
           className="flex flex-col items-center"
         >
           <ColorPalletes
@@ -69,8 +76,11 @@ export default function Home() {
           />
         </div>
       ))}
-      {loading && <div>Loading more...</div>}
-      {error && <div>Error: {error}</div>}
+      {isFetchingNextPage && (
+        <div className="flex justify-center items-center col-span-full">
+          <Loader2 className="animate-spin text-gray-900 w-8 h-8" />
+        </div>
+      )}
     </div>
   );
 }

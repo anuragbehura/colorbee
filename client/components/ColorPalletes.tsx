@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
+import React from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Heart } from 'lucide-react';
-import { Button } from './ui/button';
-import { useDispatch } from 'react-redux';
-import { likeColorPalette, fetchColorPaletteById } from '@/redux/slice/colorSlice';
-import { useUser } from '@/hooks/useUser';
-import { AppDispatch } from '@/redux/store';
+import { Heart } from "lucide-react";
+import { Button } from "./ui/button";
+import { useUser } from "@/hooks/useUser";
+import { useColorMutation } from "@/hooks/useColorMutation";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ColorPaletteProps {
     id: string;
@@ -19,31 +18,26 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
     id,
     colors,
     likes,
-    isLiked: initialIsLiked,
-    createdAt
+    isLiked,
+    createdAt,
 }) => {
-    const dispatch = useDispatch<AppDispatch>();
     const timeAgo = formatDistanceToNow(new Date(createdAt));
     const userToken = useUser();
+    const { toggleLikePaletteMutation } = useColorMutation();
+    const queryClient = useQueryClient();
 
-    // Fetch initial like status when component mounts
-    useEffect(() => {
-        if (userToken) {
-            dispatch(fetchColorPaletteById(id));
-        }
-    }, [dispatch, id, userToken]);
+    // ✅ Get latest state from cache
+    const cachedData: any = queryClient
+        .getQueryData<any>(["colorPalletes"])
+        ?.pages.flatMap((page: any) => page.palettes)
+        .find((p: any) => p.id === id);
 
-    const handleLike = async () => {
-        if (userToken) {
-            try {
-                await dispatch(likeColorPalette({
-                    paletteId: id,
-                    userToken
-                })).unwrap();
-            } catch (error) {
-                console.error('Failed to update like:', error);
-            }
-        }
+    const liveLikes = cachedData?.likes ?? likes;
+    const liveIsLiked = cachedData?.isLiked ?? isLiked;
+
+    const handleLike = () => {
+        if (!userToken) return;
+        toggleLikePaletteMutation.mutate({ paletteId: id, userToken });
     };
 
     return (
@@ -69,11 +63,11 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
                 >
                     <Heart
                         size={22}
-                        fill={initialIsLiked ? 'black' : 'none'}
-                        color={initialIsLiked ? 'black' : 'currentColor'}
+                        fill={liveIsLiked ? "black" : "none"}
+                        color={liveIsLiked ? "black" : "currentColor"}
                         className="transition-colors duration-200"
                     />
-                    <span className="text-sm">{likes}</span>
+                    <span className="text-sm">{liveLikes}</span>
                 </Button>
                 <span className="text-sm text-gray-500">{timeAgo}</span>
             </div>

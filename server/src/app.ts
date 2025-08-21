@@ -17,6 +17,6 @@ app.use(express.json({ limit: "20kb" }));
 app.use(express.urlencoded({ extended: true, limit: "20kb" }));
 
 
-app.use("/api/colors", colorRoutes);
+app.use("/api/v1/colors", colorRoutes);
 
 export {app};

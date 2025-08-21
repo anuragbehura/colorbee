@@ -4,7 +4,7 @@ import {app} from "./app"
 
 config();
 
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 3005;
 
 connectDB();
 app.get('/', (req, res) => {

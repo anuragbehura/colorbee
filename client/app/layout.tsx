@@ -5,7 +5,7 @@ import { LeftSidebar } from "@/components/LeftSidebar";
 import { Navbar } from "@/components/Navbar";
 import { RightSidebar } from "@/components/RightSidebar";
 import LoadingBar from "@/components/LoadingBar";
-import { Provider } from "@/api/provider";
+import { Provider } from "@/api/Provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,38 +28,35 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning={true} lang="en" className="h-full">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full`}>
-
-        {/* LoadingBar */}
+    <html suppressHydrationWarning={true} lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden`}>
         <LoadingBar />
         <Provider>
-
           {/* Navbar fixed at the top */}
-          <div className="fixed top-0 z-50 w-screen bg-white">
+          <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b">
             <Navbar />
           </div>
 
-          {/* Main container with correct padding-top to account for fixed navbar */}
-          <div className="flex h-screen pt-16">
-            {/* Left sidebar - fixed position with independent scroll */}
-            <div className="fixed left-0 w-52 h-[calc(100vh-64px)] border-r">
-              <div className="h-full overflow-y-auto scrollbar-none">
-                <LeftSidebar />
-              </div>
+          {/* Main layout container */}
+          <div className="fixed inset-0 top-16 flex">
+            {/* Left sidebar - fixed with independent scroll */}
+            <aside className="w-52 h-full border-r bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-none">
+              <LeftSidebar />
+            </aside>
+
+            {/* Main content wrapper - this creates the scroll context */}
+            <div className="flex-1 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-none">
+              <main className="bg-white min-h-full">
+                <div className="container max-w-6xl mx-auto p-6">
+                  {children}
+                </div>
+              </main>
             </div>
 
-            {/* Main content - with left and right margin for sidebars */}
-            <main className="flex-1 ml-64 mr-64 min-h-screen overflow-y-auto">
-              <div className="container max-w-3xl mx-auto py-6 px-8">
-                {children}
-              </div>
-            </main>
-
-            {/* Right sidebar - fixed position */}
-            <div className="fixed right-0 w-80 h-[calc(100vh-64px)] border-l">
+            {/* Right sidebar - fixed with independent scroll */}
+            <aside className="w-80 h-full border-l bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
               <RightSidebar />
-            </div>
+            </aside>
           </div>
         </Provider>
       </body>

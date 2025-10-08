@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { User } from "../models/user";
 import { Color } from "../models/colors";
 import { Like } from "../models/Like";
+import mongoose from "mongoose";
 
 
 export const addColor = async (req: Request, res: Response) => {
@@ -50,7 +51,21 @@ export const getAllColorPalettes = async (req: Request, res: Response) => {
         const skip = (page - 1) * limit;
 
         // Get userToken from query params or headers
-        const userToken = req.query.userToken as string || req.headers['user-token'] as string;
+        const userToken = (req.headers['user-token'] as string) || (req.query.userToken as string);
+
+        console.log("🔍 Received userToken:", userToken); // Debug log
+        console.log("📋 Headers:", req.headers); // Debug log
+
+        let userLikes = new Set<string>();
+        if (userToken) {
+            const likes = await Like.find({ userToken }, "paletteId").lean();
+            console.log("💖 Found likes:", likes); // Debug log
+            userLikes = new Set(
+                likes.map(like => like.paletteId.toString())
+            );
+            console.log("📦 Liked palette IDs Set:", Array.from(userLikes));
+        }
+
 
         // Fetch color palettes
         const [totalPalettes, colorPalettes] = await Promise.all([
@@ -68,10 +83,11 @@ export const getAllColorPalettes = async (req: Request, res: Response) => {
         const userMap = Object.fromEntries(users.map(user => [user._id.toString(), user.username]));
 
         // Format response with like status
-        const formattedPalettes = await Promise.all(colorPalettes.map(async palette => {
-            const isLiked = userToken ?
-                !!(await Like.findOne({ paletteId: palette._id, userToken })) :
-                false;
+        const formattedPalettes = colorPalettes.map(palette => {
+            const paletteIdString = palette._id.toString();
+            const isLiked = userLikes.has(paletteIdString);
+
+            console.log(`🎨 Palette ${paletteIdString}: isLiked = ${isLiked}`); // Debug log
 
             return {
                 id: palette._id,
@@ -81,7 +97,7 @@ export const getAllColorPalettes = async (req: Request, res: Response) => {
                 likes: palette.likes,
                 isLiked
             };
-        }));
+        });
 
         return res.status(200).json({
             message: "Color palettes retrieved successfully",
@@ -89,6 +105,7 @@ export const getAllColorPalettes = async (req: Request, res: Response) => {
             totalPalettes,
             currentPage: page,
             totalPages: Math.ceil(totalPalettes / limit),
+            hasMore: page < Math.ceil(totalPalettes / limit),
             palettes: formattedPalettes,
         });
     } catch (error: unknown) {
@@ -105,15 +122,22 @@ export const getAllColorPalettes = async (req: Request, res: Response) => {
 export const getColorPaletteById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;  // Get palette ID from the request params
+        const userToken = req.query.userToken as string || req.headers['user-token'] as string;
 
         // Find the color palette by ID
-        const palette = await Color.findById(id);
+        const palette = await Color.findById(id).lean();
         if (!palette) {
             return res.status(404).json({ message: "Color palette not found" });
         }
 
+        const isLiked = userToken ? !!(await Like.findOne({ paletteId: id, userToken })) : false;
+
         // Return the found palette
-        return res.status(200).json(palette);
+        return res.status(200).json({
+            ...palette,
+            id: palette._id,
+            isLiked
+        });
     } catch (error) {
         console.error("Error fetching color palette:", error);
         return res.status(500).json({
@@ -125,53 +149,70 @@ export const getColorPaletteById = async (req: Request, res: Response) => {
 
 
 // Controller for liking a color palette
+// Controller for liking a color palette
 export const likeColorPalette = async (req: Request, res: Response) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const { id } = req.params;
-        const { userToken } = req.body;
+        const userToken = req.query.userToken as string || req.headers['user-token'] as string;
 
-        const palette = await Color.findById(id);
+        console.log("❤️ Like request - Palette ID:", id, "UserToken:", userToken); // Debug log
+
+        if (!userToken) {
+            await session.abortTransaction();
+            return res.status(400).json({ message: "User token is required" });
+        }
+
+        const palette = await Color.findById(id).session(session);
         if (!palette) {
-            return res.status(404).json({ message: "Color palette not found" });
+            await session.abortTransaction();
+            return res.status(404).json({ message: "Palette not found" });
         }
 
-        const existingLike = await Like.findOne({
-            paletteId: id,
-            userToken
-        });
+        const existingLike = await Like.findOne({ paletteId: id, userToken }).session(session);
+        console.log("🔍 Existing like found:", existingLike); // Debug log
 
-        if (!existingLike) {
-            // Create new like
-            await Like.create({
-                paletteId: id,
-                userToken,
-                createdAt: new Date()
-            });
-            palette.likes += 1;
-        } else {
-            // Remove existing like
-            await Like.findOneAndDelete({
-                paletteId: id,
-                userToken
-            });
+        if (existingLike) {
+            // unlike
+            await Like.deleteOne({ _id: existingLike._id }, { session });
             palette.likes = Math.max(0, palette.likes - 1);
+            await palette.save({ session });
+            await session.commitTransaction();
+
+            console.log("👎 Unliked - New count:", palette.likes); // Debug log
+
+            return res.json({
+                message: "Unliked",
+                isLiked: false,
+                likes: palette.likes,
+            });
+        } else {
+            // like
+            await Like.create([{ paletteId: id, userToken }], { session });
+            console.log("✅ Created new like:", Like); // Debug log
+
+            palette.likes += 1;
+            await palette.save({ session });
+            await session.commitTransaction();
+
+            console.log("👍 Liked - New count:", palette.likes); // Debug log
+
+            return res.json({
+                message: "Liked",
+                isLiked: true,
+                likes: palette.likes,
+            });
         }
-
-        await palette.save();
-
-        return res.status(200).json({
-            message: "Color palette like status updated",
-            id: palette._id,
-            likes: palette.likes,
-            isLiked: !existingLike
-        });
-
     } catch (error) {
+        await session.abortTransaction();
         console.error("Error updating like status:", error);
         return res.status(500).json({
             message: "Internal server error",
-            error: error instanceof Error ? error.message : "Unknown error"
+            error: error instanceof Error ? error.message : "Unknown error",
         });
+    } finally {
+        session.endSession();
     }
 };
 

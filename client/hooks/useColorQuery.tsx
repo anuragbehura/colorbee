@@ -1,18 +1,20 @@
 import { useQuery, useInfiniteQuery, } from "@tanstack/react-query";
-import { colorApi } from "@/api/colorApi";
+import { colorApi } from "@/api/colorApi";  
 
 export const useColorQuery = () => {
     // Fetch all color palettes
-    const useColorPalletes = () => {
+    const useColorPalletes = (userToken?: string | null) => {
         return useInfiniteQuery({
-            queryKey: ["colorPalletes"],
+            queryKey: ["colorPalletes", userToken],
             queryFn: ({ pageParam = 1 }) => 
                 colorApi.getAllColorPalletes({
-                    page: pageParam
+                    page: pageParam,
+                    userToken: userToken || undefined
                 }),
             getNextPageParam: (lastPage: any) =>
                 lastPage.hasMore ? lastPage.currentPage + 1 : undefined,
-            initialPageParam: 1
+            initialPageParam: 1,
+            enabled: !!userToken, // only fetch when userToken is available
         });
     };
 

@@ -30,12 +30,12 @@ export const useColorMutation = () => {
         mutationFn: ({ paletteId, userToken }: { paletteId: string; userToken: string }) =>
             colorApi.likeColorPalette({ id: paletteId, userToken }),
 
-        onMutate: async ({ paletteId }) => {
-            await queryClient.cancelQueries({ queryKey: ["colorPalletes"] });
+        onMutate: async ({ paletteId, userToken }) => {
+            await queryClient.cancelQueries({ queryKey: ["colorPalletes", userToken] });
 
-            const prevData = queryClient.getQueryData<any>(["colorPalletes"]);
+            const prevData = queryClient.getQueryData<any>(["colorPalletes", userToken]);
 
-            queryClient.setQueryData<any>(["colorPalletes"], (old: any) => {
+            queryClient.setQueryData<any>(["colorPalletes", userToken], (old: any) => {
                 if (!old) return old;
                 return {
                     ...old,
@@ -54,24 +54,31 @@ export const useColorMutation = () => {
                 };
             });
 
-            return { prevData };
+            return { prevData, userToken };
         },
 
-        onError: (_err, _vars, ctx) => {
-            // Rollback to previous state
-            queryClient.setQueryData(["colorPalletes"], ctx?.prevData);
+        onError: (_err, { userToken }, ctx) => {
+            if (ctx) {
+                queryClient.setQueryData(["colorPalletes", userToken], ctx.prevData);
+            }
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to update like status",
+            });
         },
 
-        onSuccess: (data, { paletteId }) => {
-            // ✅ Merge server response with cache, no invalidate (no flicker)
-            queryClient.setQueryData<any>(["colorPalletes"], (old: any) => {
+        onSuccess: (data, { paletteId, userToken }) => {
+            queryClient.setQueryData<any>(["colorPalletes", userToken], (old: any) => {
                 if (!old) return old;
                 return {
                     ...old,
                     pages: old.pages.map((page: any) => ({
                         ...page,
                         palettes: page.palettes.map((p: any) =>
-                            p.id === paletteId ? { ...p, ...data } : p
+                            p.id === paletteId
+                                ? { ...p, likes: data.likes, isLiked: data.isLiked }
+                                : p
                         ),
                     })),
                 };

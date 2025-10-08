@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Heart } from "lucide-react";
 import { Button } from "./ui/button";
@@ -26,7 +26,10 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
     const { toggleLikePaletteMutation } = useColorMutation();
     const queryClient = useQueryClient();
 
-    // ✅ Get latest state from cache
+    // For showing "copied" feedback
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+    // ✅ Always read latest from cache if available
     const cachedData: any = queryClient
         .getQueryData<any>(["colorPalletes"])
         ?.pages.flatMap((page: any) => page.palettes)
@@ -40,16 +43,32 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
         toggleLikePaletteMutation.mutate({ paletteId: id, userToken });
     };
 
+    const handleCopy = async (color: string, index: number) => {
+        try {
+            await navigator.clipboard.writeText(color);
+            setCopiedIndex(index);
+            setTimeout(() => setCopiedIndex(null), 1000); // Reset after 1s
+        } catch (error) {
+            console.log("Error while copying", error)
+        }
+    }
+
     return (
-        <div className="w-[250px] max-w-sm">
+        <div className="w-[200px] max-w-sm">
             {/* Color display */}
-            <div className="aspect-square rounded-lg overflow-hidden mb-2">
+            <div className="aspect-square rounded-lg overflow-hidden mb-2 flex flex-col">
                 {colors.map((color, index) => (
                     <div
                         key={index}
                         style={{ backgroundColor: color }}
-                        className="w-full h-1/4"
-                    />
+                        className="flex-1 relative cursor-pointer group"
+                        onClick={() => handleCopy(color, index)}
+                    >
+                        {/* Overlay hex code on hover */}
+                        <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/40 text-white font-mono text-xs">
+                            {copiedIndex === index ? "Copied!" : color}
+                        </span>
+                    </div>
                 ))}
             </div>
 
@@ -63,9 +82,8 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
                 >
                     <Heart
                         size={22}
-                        fill={liveIsLiked ? "black" : "none"}
-                        color={liveIsLiked ? "black" : "currentColor"}
-                        className="transition-colors duration-200"
+                        className={`transition-colors duration-200 ${liveIsLiked ? "fill-black text-black" : "text-gray-500"
+                            }`}
                     />
                     <span className="text-sm">{liveLikes}</span>
                 </Button>

@@ -34,15 +34,10 @@ const Page = () => {
     }
 
     try {
-      // setIsSubmitting(true);
-      // await dispatch(addColorPalette({
-      //   username: username,
-      //   colors: colors,
-      //   createdAt: new Date().toISOString(),
-      //   likes: 0,
-      //   isLiked: false
-      // })).unwrap();
-
+      await addColorMutation.mutateAsync({
+        username: username,
+        colorHex: colors
+      })
       toast({
         title: "Success!",
         description: "Color palette has been added to the collection"

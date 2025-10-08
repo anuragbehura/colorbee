@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect } from "react";
 import ColorPalletes from "@/components/ColorPalletes";
 import { useUser } from "@/hooks/useUser";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -20,7 +20,7 @@ export default function Home() {
     isFetchingNextPage,
     status,
     isLoading,
-  } = useColorQuery().useColorPalletes();
+  } = useColorQuery().useColorPalletes(userToken);
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
@@ -33,15 +33,15 @@ export default function Home() {
       toast({
         title: "Error",
         description: "Failed to load Color Palletes"
-      })
+      });
     }
-  }, [error]);
+  }, [error, toast]);
 
   const allColorPalletes = data?.pages.flatMap((page: any) => page.palettes) || [];
   
 
 
-  if (isLoading) {
+  if (!userToken || isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="animate-spin text-blue-500 w-12 h-12" />
@@ -60,7 +60,7 @@ export default function Home() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
       {allColorPalletes.map((palette, index) => (
         <div
           key={palette.id}

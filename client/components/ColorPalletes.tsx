@@ -29,7 +29,7 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
     // For showing "copied" feedback
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-    // ✅ Always read latest from cache if available
+    // Always read latest from cache if available
     const cachedData: any = queryClient
         .getQueryData<any>(["colorPalletes"])
         ?.pages.flatMap((page: any) => page.palettes)

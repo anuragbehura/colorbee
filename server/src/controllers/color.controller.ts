@@ -147,6 +147,36 @@ export const getColorPaletteById = async (req: Request, res: Response) => {
     }
 };
 
+// Controller for get liked palletes by user
+export const likedColorPalettes = async (req: Request, res: Response) => {
+    try {
+        const userToken = req.query.userToken as string || req.headers['user-token'] as string;
+
+        if (!userToken) {
+            return res.status(404).json({ message: "User Token not found" });
+        }
+
+        // Find all likes for this user
+        const likes = await Like.find({userToken}).lean();
+
+        if (!likes || likes.length === 0) {
+            return res.status(200).json({ palettes: [] });
+        }
+
+        // Get all palettes by those IDs
+        const paletteIds = likes.map(like => like.paletteId);
+
+        // Find all palettes by those IDs
+        const palettes = await Color.find({ _id: { $in: paletteIds } }).lean();
+
+        return res.status(200).json({
+            palettes
+        })
+    } catch (error) {
+        
+    }
+}
+
 
 // Controller for liking a color palette
 // Controller for liking a color palette

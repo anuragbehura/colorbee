@@ -18,16 +18,25 @@ export const useColorQuery = () => {
         });
     };
 
+    const useLikedColorPalletes = (userToken?: string) => {
+        return useQuery({
+            queryKey: ["likedPalletes", userToken],
+            queryFn: () => colorApi.likedColorPalettes(userToken),
+            enabled: !!userToken, // Only run query if userToken is avilable
+        })
+    };
+
     const useColorPalletesById = (id:string) => {
         return useQuery({
             queryKey: ["colorPallete", id],
             queryFn: () => colorApi.getColorPaletteById(id),
-            enabled: !!id // Only run query of id is provided
+            enabled: !!id // Only run query if id is provided
         });
     };
 
     return {
         useColorPalletes,
         useColorPalletesById,
+        useLikedColorPalletes,
     }
 };

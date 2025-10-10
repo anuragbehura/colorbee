@@ -68,6 +68,18 @@ export const colorApi = {
         }
     },
 
+    // Get user liked color palettes
+    likedColorPalettes: async (userToken?: string) => {
+        try {
+            const response = await axios.get(`${API_URL}/liked-color-palettes`, {
+                headers: userToken ? { "user-token": userToken } : {}
+            });
+            return response.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.error || "Unable to fetch Liked color palettes")
+        }
+    },
+
     // Like a color palette
     likeColorPalette: async ({ id, userToken }: { id: string; userToken: string }) => {
         const url = `${API_URL}/${id}/like?userToken=${encodeURIComponent(userToken)}`;

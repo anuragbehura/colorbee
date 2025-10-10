@@ -64,6 +64,7 @@ export default function Home() {
       {allColorPalletes.map((palette, index) => (
         <div
           key={palette.id}
+          
           ref={index === allColorPalletes.length - 1 ? ref : null}
           className="flex flex-col items-center"
         >

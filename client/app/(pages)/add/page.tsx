@@ -15,7 +15,7 @@ const Page = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const userToken = useUser();
   const { toast } = useToast();
-  const { addColorMutation,  } = useColorMutation();
+  const { addColorMutation } = useColorMutation();
 
   const handleColorChange = (index: number, value: string) => {
     const newColors = [...colors];
@@ -81,7 +81,7 @@ const Page = () => {
                   onChange={(e) => handleColorChange(index, e.target.value)}
                   className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
                 />
-                <input
+                {/* <input
                   type="text"
                   value={color}
                   onChange={(e) => {
@@ -91,11 +91,11 @@ const Page = () => {
                     if (!value.startsWith('#') && !hexRegex.test('#' + value)) return;
                     handleColorChange(index, value.startsWith('#') ? value : '#' + value);
                   }}
-                  className="opacity-0 group-hover:opacity-100 absolute z-10 bg-black/50 text-white text-center py-1 px-2 rounded w-24"
-                />
-                <span className="text-white font-mono opacity-0 group-hover:opacity-100 pointer-events-none">
+                  className="absolute z-10 bg-black/50 text-white text-center py-1 px-2 rounded w-24 group-hover:opacity-100 group-focus-within:opacity-100 opacity-100 transition-opacity"
+                /> */}
+                {/* <span className="text-white font-mono opacity-0 group-hover:opacity-100 pointer-events-none">
                   {color}
-                </span>
+                </span> */}
               </div>
             </div>
           ))}

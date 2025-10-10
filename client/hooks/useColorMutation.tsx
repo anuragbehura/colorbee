@@ -32,8 +32,10 @@ export const useColorMutation = () => {
 
         onMutate: async ({ paletteId, userToken }) => {
             await queryClient.cancelQueries({ queryKey: ["colorPalletes", userToken] });
+            await queryClient.cancelQueries({ queryKey: ["likedPalletes", userToken] });
 
             const prevData = queryClient.getQueryData<any>(["colorPalletes", userToken]);
+            const prevLiked = queryClient.getQueryData<any>(["likedPalletes", userToken]);
 
             queryClient.setQueryData<any>(["colorPalletes", userToken], (old: any) => {
                 if (!old) return old;
@@ -54,12 +56,36 @@ export const useColorMutation = () => {
                 };
             });
 
-            return { prevData, userToken };
+            // Optimistically update linked palettes
+            queryClient.setQueryData<any>(["likedPalletes", userToken], (old: any)=> {
+                if (!old) return old;
+                const palette = prevData?.pages.flatMap((page: any) => page.palettes)
+                .find((p: any) => p.id === paletteId);
+
+                if(!palette) return old;
+
+                if(palette.isLiked) {
+                    // If unlinking remove from liked
+                    return {
+                        ...old,
+                        palettes: old.palettes.filter((p: any) => p.id !== paletteId),
+                    };
+                } else {
+                    // If liking, add to liked
+                    return {
+                        ...old,
+                        palettes: [...old.palettes, { ...palette, isLiked: true, likes: palette.likes + 1 }],
+                    };
+                }
+            })
+
+            return { prevData, prevLiked, userToken };
         },
 
         onError: (_err, { userToken }, ctx) => {
             if (ctx) {
                 queryClient.setQueryData(["colorPalletes", userToken], ctx.prevData);
+                queryClient.setQueryData(["likedPalletes", userToken], ctx.prevLiked);
             }
             toast({
                 variant: "destructive",
@@ -83,6 +109,8 @@ export const useColorMutation = () => {
                     })),
                 };
             });
+
+            queryClient.invalidateQueries({ queryKey: ["likedPalletes", userToken] });
         },
     });
 

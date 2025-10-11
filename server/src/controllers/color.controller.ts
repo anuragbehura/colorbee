@@ -163,14 +163,29 @@ export const likedColorPalettes = async (req: Request, res: Response) => {
             return res.status(200).json({ palettes: [] });
         }
 
-        // Get all palettes by those IDs
+        // Get all palettes by IDs
         const paletteIds = likes.map(like => like.paletteId);
 
         // Find all palettes by those IDs
         const palettes = await Color.find({ _id: { $in: paletteIds } }).lean();
 
+        // Fetch usernames in a single query
+        const userIds = [...new Set(palettes.map(palette => palette.userId.toString()))];
+        const users = await User.find({ _id: { $in: userIds } }, "username").lean();
+        const userMap = Object.fromEntries(users.map(user => [user._id.toString(), user.username]));
+
+        // Format response with isLiked: true for all palettes
+        const formattedPalettes = palettes.map(palette => ({
+            id: palette._id,
+            username: userMap[palette.userId.toString()] || "Unknown User",
+            colors: palette.colors,
+            createdAt: palette.createdAt,
+            likes: palette.likes,
+            isLiked: true // IMPORTANT: All palettes in this list are liked
+        }));
+
         return res.status(200).json({
-            palettes
+            palettes: formattedPalettes
         })
     } catch (error) {
         

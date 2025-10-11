@@ -56,28 +56,44 @@ export const useColorMutation = () => {
                 };
             });
 
-            // Optimistically update linked palettes
-            queryClient.setQueryData<any>(["likedPalletes", userToken], (old: any)=> {
+            // Optimistically update liked palettes
+            queryClient.setQueryData<any>(["likedPalletes", userToken], (old: any) => {
                 if (!old) return old;
-                const palette = prevData?.pages.flatMap((page: any) => page.palettes)
-                .find((p: any) => p.id === paletteId);
 
-                if(!palette) return old;
+                // Check if palette is currently in liked collection
+                const likedPalette = old.palettes.find((p: any) =>
+                    p.id === paletteId || p._id === paletteId || p.id?.toString() === paletteId
+                );
 
-                if(palette.isLiked) {
-                    // If unlinking remove from liked
+                if (likedPalette) {
+                    // Currently liked - unliking, so remove from collection
                     return {
                         ...old,
-                        palettes: old.palettes.filter((p: any) => p.id !== paletteId),
+                        palettes: old.palettes.filter((p: any) => {
+                            const pId = p.id || p._id;
+                            return pId?.toString() !== paletteId.toString();
+                        }),
                     };
                 } else {
-                    // If liking, add to liked
+                    // Not liked - liking, so add to collection
+                    const palette = prevData?.pages?.flatMap((page: any) => page.palettes)
+                        .find((p: any) => p.id === paletteId);
+
+                    if (!palette) return old;
+
                     return {
                         ...old,
-                        palettes: [...old.palettes, { ...palette, isLiked: true, likes: palette.likes + 1 }],
+                        palettes: [
+                            ...old.palettes,
+                            {
+                                ...palette,
+                                isLiked: true,
+                                likes: palette.likes + 1
+                            }
+                        ],
                     };
                 }
-            })
+            });
 
             return { prevData, prevLiked, userToken };
         },
@@ -95,6 +111,9 @@ export const useColorMutation = () => {
         },
 
         onSuccess: (data, { paletteId, userToken }) => {
+            console.log("✅ Like toggle success:", data);
+
+            // Update colorPalletes with server response
             queryClient.setQueryData<any>(["colorPalletes", userToken], (old: any) => {
                 if (!old) return old;
                 return {
@@ -110,6 +129,60 @@ export const useColorMutation = () => {
                 };
             });
 
+            // Update liked palettes cache based on server response
+            queryClient.setQueryData<any>(["likedPalletes", userToken], (old: any) => {
+                if (!old) return old;
+
+                if (data.isLiked) {
+                    // Palette is now liked - ensure it's in the collection
+                    const paletteExists = old.palettes.some((p: any) => {
+                        const pId = p.id || p._id;
+                        return pId?.toString() === paletteId.toString();
+                    });
+
+                    if (!paletteExists) {
+                        // Get palette from main cache to add to liked
+                        const allPalettes = queryClient.getQueryData<any>(["colorPalletes", userToken]);
+                        const palette = allPalettes?.pages?.flatMap((page: any) => page.palettes)
+                            .find((p: any) => p.id === paletteId);
+
+                        if (palette) {
+                            return {
+                                ...old,
+                                palettes: [
+                                    ...old.palettes,
+                                    { ...palette, isLiked: true, likes: data.likes }
+                                ]
+                            };
+                        }
+                    } else {
+                        // Update existing palette in liked collection
+                        return {
+                            ...old,
+                            palettes: old.palettes.map((p: any) => {
+                                const pId = p.id || p._id;
+                                return pId?.toString() === paletteId.toString()
+                                    ? { ...p, isLiked: true, likes: data.likes }
+                                    : p;
+                            })
+                        };
+                    }
+                } else {
+                    // Palette is now unliked - remove from collection
+                    console.log("🗑️ Removing palette from liked collection");
+                    return {
+                        ...old,
+                        palettes: old.palettes.filter((p: any) => {
+                            const pId = p.id || p._id;
+                            return pId?.toString() !== paletteId.toString();
+                        })
+                    };
+                }
+
+                return old;
+            });
+
+            // Invalidate to ensure consistency
             queryClient.invalidateQueries({ queryKey: ["likedPalletes", userToken] });
         },
     });

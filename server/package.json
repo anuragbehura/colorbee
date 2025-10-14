@@ -12,10 +12,10 @@
   "description": "",
   "devDependencies": {
     "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
-    "@types/node": "^22.10.10",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.18.9",
     "tsc-watch": "^6.2.1",
-    "typescript": "^5.7.3"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { RightSidebar } from "@/components/RightSidebar";
 import LoadingBar from "@/components/LoadingBar";
 import { Provider } from "@/api/Provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -49,6 +50,7 @@ export default function RootLayout({
               <main className="bg-white min-h-full">
                 <div className="container max-w-6xl mx-auto p-6">
                   {children}
+                  <Toaster />
                 </div>
               </main>
             </div>

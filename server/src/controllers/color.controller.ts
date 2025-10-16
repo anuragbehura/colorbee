@@ -7,31 +7,38 @@ import mongoose from "mongoose";
 
 export const addColor = async (req: Request, res: Response) => {
     try {
-        const { username, colorHex } = req.body;
+        const { colorHex, tags } = req.body;
 
         // Validate Request Data
-        if (!username || !Array.isArray(colorHex) || colorHex.length === 0) {
-            return res.status(400).json({
-                message: "Invalid request: Username and colorHex are required",
-            });
-        }
+        // if (!username || !Array.isArray(colorHex) || colorHex.length === 0) {
+        //     return res.status(400).json({
+        //         message: "Invalid request: Username and colorHex are required",
+        //     });
+        // }
+
+        // Validate tags
+        const validTags =
+            Array.isArray(tags) && tags.every((t) => typeof t === "string")
+                ? tags.map((t) => t.trim().toLowerCase())
+                : [];
 
         // Check if the user already exists
-        let existingUser = await User.findOne({ username });
+        // let existingUser = await User.findOne({ username });
 
-        if (!existingUser) {
-            existingUser = await User.create({ username });
-        }
+        // if (!existingUser) {
+        //     existingUser = await User.create({ username });
+        // }
 
         // Save colors and link to user
         const newColors = await Color.create({
-            userId: existingUser._id, // Link the color to the user
+            // userId: existingUser._id, // Link the color to the user
             colors: colorHex,
+            tags: validTags,
         });
 
         return res.status(201).json({
             message: "Colors added successfully",
-            user: existingUser,
+            // user: existingUser,
             colors: newColors,
         });
 

@@ -4,6 +4,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 interface IColor extends Document {
     userId: mongoose.Types.ObjectId;
     colors: string[];
+    tags: string[];
     likes: number;
     isLiked: boolean;
     createdAt: Date;
@@ -15,7 +16,7 @@ const colorSchema = new Schema<IColor>(
         userId: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            required: true, // ✅ Ensures every color has a user
+            // required: true, // ✅ Ensures every color has a user
         },
         colors: {
             type: [String], // ✅ Ensures an array of hex colors
@@ -25,9 +26,15 @@ const colorSchema = new Schema<IColor>(
             type: Number,
             default: 0,
         },
+        tags: {
+            type: [String],
+            default: [], 
+        },
     },
     { timestamps: true }
 );
+
+colorSchema.index({ tags: 1 })
 
 // Export the model
 export const Color: Model<IColor> = mongoose.model<IColor>("Color", colorSchema);

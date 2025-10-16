@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from 'react';
 import { Search, Upload, User } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -7,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { useUser } from '@/hooks/useUser';
 import { useToast } from '@/hooks/use-toast';
 import { useColorMutation } from '@/hooks/useColorMutation';
+import TagBar from '@/components/TagBar';
 
 const Page = () => {
   const [colors, setColors] = useState(['#CCCCCC', '#BBBBBB', '#AAAAAA', '#999999']);
-  const [tags, setTags] = useState('');
-  const [username, setUsername] = useState('');
+  const [tags, setTags] = useState<{ type: "color" | "collection"; value: string }[]>([]);
+  // const [username, setUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const userToken = useUser();
   const { toast } = useToast();
@@ -35,7 +37,8 @@ const Page = () => {
 
     try {
       await addColorMutation.mutateAsync({
-        username: username,
+        // username: username,
+        tags: tags.map(tag => tag.value),
         colorHex: colors
       })
       toast({
@@ -45,7 +48,7 @@ const Page = () => {
 
       // Reset form
       setColors(['#CCCCCC', '#BBBBBB', '#AAAAAA', '#999999']);
-      setTags('');
+      // setTags('');
     } catch (error) {
       toast({
         title: "Error",
@@ -58,7 +61,7 @@ const Page = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 max-w-md mx-auto space-y-6">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 w-full mx-auto space-y-6">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-semibold">New Color Palette</h1>
         <p className="text-gray-600">
@@ -66,7 +69,7 @@ const Page = () => {
         </p>
       </div>
 
-      <Card className="w-full aspect-square overflow-hidden rounded-2xl">
+      <Card className="w-96 aspect-square overflow-hidden rounded-2xl">
         <div className="h-full flex flex-col">
           {colors.map((color, index) => (
             <div
@@ -114,14 +117,25 @@ const Page = () => {
           />
         </div> */}
 
-        <div className='relative'>
-          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <Input type="text"
+        <div className='flex items-center justify-center'>
+          {/* <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Input
+            type="text"
             placeholder="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full pl-10 rounded-full" />
+            className="w-full pl-10 rounded-full" /> */}
+          <TagBar tags={tags} setTags={setTags} />
         </div>
+        {/* <div className='relative'>
+          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Input
+            type="text"
+            placeholder="tags"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full pl-10 rounded-full" />
+        </div> */}
 
         <Button
           onClick={handleSubmit}

@@ -6,8 +6,8 @@ const API_URL = `${backendApi}api/v1/colors`;
 
 export const colorApi = {
     // Add colors
-    addColor: async ({ username, colorHex }: { username: string; colorHex: string[] }) => {
-        const response = await axios.post(`${API_URL}/add-color`, { username, colorHex });
+    addColor: async ({ tags, colorHex }: { tags: string[]; colorHex: string[] }) => {
+        const response = await axios.post(`${API_URL}/add-color`, { colorHex, tags });
         return response.data;
     },
 

@@ -85,20 +85,23 @@ export const getAllColorPalettes = async (req: Request, res: Response) => {
         ]);
 
         // Fetch usernames in a single query
-        const userIds = [...new Set(colorPalettes.map(palette => palette.userId.toString()))];
-        const users = await User.find({ _id: { $in: userIds } }, "username").lean();
+        const userIds = [...new Set(colorPalettes.map(palette => palette.userId ? palette.userId.toString() : null).filter(Boolean)),];
+        const users = userIds.length ? await User.find({ _id: { $in: userIds } }, "username").lean() : [];
         const userMap = Object.fromEntries(users.map(user => [user._id.toString(), user.username]));
 
         // Format response with like status
         const formattedPalettes = colorPalettes.map(palette => {
-            const paletteIdString = palette._id.toString();
+            const paletteIdString = palette._id?.toString?.() || "";
             const isLiked = userLikes.has(paletteIdString);
 
             console.log(`🎨 Palette ${paletteIdString}: isLiked = ${isLiked}`); // Debug log
+            const username = palette.userId
+                ? userMap[palette.userId.toString()] || "Unknown User"
+                : "Unknown User";
 
             return {
                 id: palette._id,
-                username: userMap[palette.userId.toString()] || "Unknown User",
+                username,
                 colors: palette.colors,
                 createdAt: palette.createdAt,
                 likes: palette.likes,

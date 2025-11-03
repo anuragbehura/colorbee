@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, keepPreviousData, } from "@tanstack/react-query";
 import { colorApi } from "@/api/colorApi";  
 
 export const useColorQuery = () => {
@@ -16,6 +16,26 @@ export const useColorQuery = () => {
             initialPageParam: 1,
             enabled: !!userToken, // only fetch when userToken is available
         });
+    };
+
+    // Fetch color palettes by popular - : month, year, or all
+    const useColorPalletesByPopular = (filter: string, userToken?: string | null) => {
+        return useInfiniteQuery({
+            queryKey: ["PopularColorPalletes", userToken, filter],
+            queryFn: ({ pageParam = 1 }) =>
+                colorApi.getColorPalettesByPopular({
+                    page: pageParam,
+                    userToken: userToken || undefined,
+                    filter: filter
+                }),
+            getNextPageParam: (lastPage: any) =>
+                lastPage.hasMore ? lastPage.currentPage + 1 : undefined,
+            initialPageParam: 1,
+            enabled: !!userToken, // Only fetch when userToken is available
+            refetchOnMount: true,
+            staleTime: 0,
+            refetchOnWindowFocus: false,
+        })
     };
 
     const useLikedColorPalletes = (userToken?: string) => {
@@ -38,5 +58,6 @@ export const useColorQuery = () => {
         useColorPalletes,
         useColorPalletesById,
         useLikedColorPalletes,
+        useColorPalletesByPopular,
     }
 };

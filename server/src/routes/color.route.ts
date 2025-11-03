@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { addColor, getAllColorPalettes, getColorPaletteById, likeColorPalette, likedColorPalettes } from "../controllers/color.controller";
+import { addColor, getAllColorPalettes, getColorPaletteById, getColorPalettesByPopular, likeColorPalette, likedColorPalettes } from "../controllers/color.controller";
 
 export const router = express.Router();
 
@@ -9,6 +9,10 @@ router.post("/add-color", async (req: Request, res: Response) => {
 
 router.get("/get-all-colors", async (req: Request, res: Response) => {
     await getAllColorPalettes(req, res);
+});
+
+router.get("/get-popular-colors", async (req: Request, res: Response) => {
+    await getColorPalettesByPopular(req, res);
 });
 
 router.get("/liked-color-palettes", async (req: Request, res: Response) => {

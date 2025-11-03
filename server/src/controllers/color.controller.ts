@@ -3,6 +3,7 @@ import { User } from "../models/user";
 import { Color } from "../models/colors";
 import { Like } from "../models/Like";
 import mongoose from "mongoose";
+import getDateFilter from "../lib/dateFillter";
 
 
 export const addColor = async (req: Request, res: Response) => {
@@ -268,6 +269,84 @@ export const likeColorPalette = async (req: Request, res: Response) => {
         });
     } finally {
         session.endSession();
+    }
+};
+
+// Controller to filtering data for Popular according to month, year & all time
+export const getColorPalettesByPopular = async (req: Request, res: Response) => {
+    try {
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.max(1, parseInt(req.query.limit as string) || 10);
+        const skip = (page - 1) * limit;
+
+        // Get filter type from query params
+        const filterType = (req.query.filter as string) || 'all'; // 'month', 'year' or 'all'
+
+        // Get userToken from query params or headers
+        const userToken = (req.headers['user-token'] as string) || (req.query.userToken as string);
+
+        // Get user likes (same as before)
+        let userLikes = new Set<string>();
+        if (userToken) {
+            const likes = await Like.find({ userToken }, "paletteId").lean();
+            userLikes = new Set(
+                likes.map(like => like.paletteId.toString()) 
+            );
+        }
+
+        // Build date filter
+        const dateFilter = getDateFilter(filterType);
+
+        // Fetch color palettes
+        const [totalPalettes, colorPalettes] = await Promise.all([
+            Color.countDocuments(dateFilter),
+            Color.find(dateFilter, "UserId colors likes createdAt")
+                .sort({ likes: -1, createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+        ]);
+
+        // Fetch usernames in a single query
+        const userIds = [...new Set(colorPalettes.map(palette => palette.userId ? palette.userId.toString() : null).filter(Boolean)),];
+        const users = userIds.length ? await User.find({ _id: { $in: userIds } }, "username").lean() : [];
+        const userMap = Object.fromEntries(users.map(user => [user._id.toString(), user.username]));
+
+        // Format response with like status
+        const formattedPalettes = colorPalettes.map(palette => {
+            const paletteIdString = palette._id?.toString?.() || "";
+            const isLiked = userLikes.has(paletteIdString);
+
+            const username = palette.userId
+                ? userMap[palette.userId.toString()] || "Unknown User"
+                : "Unknown User";
+
+            return {
+                id: palette._id,
+                username,
+                colors: palette.colors,
+                createdAt: palette.createdAt,
+                likes: palette.likes,
+                isLiked
+            };
+        })
+
+        return res.status(200).json({
+            messsage: "Color palettes retrieved successfully",
+            count: formattedPalettes.length,
+            totalPalettes,
+            currentPage: page,
+            totalPages: Math.ceil(totalPalettes / limit),
+            hasMore: page < Math.ceil(totalPalettes / limit),
+            palettes: formattedPalettes,
+        });
+
+    } catch (error: unknown) {
+        console.error("Error in getColorPalettesByPopular:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            error: error instanceof Error ? error.message : "Unknown error"
+        });
     }
 };
 

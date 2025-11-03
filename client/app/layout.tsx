@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning={true} lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden`}>
-        <LoadingBar />
+        {/* <LoadingBar /> */}
         <Provider>
           {/* Navbar fixed at the top */}
           <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b">

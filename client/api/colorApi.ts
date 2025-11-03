@@ -56,6 +56,36 @@ export const colorApi = {
         return response.json();
     },
 
+    getColorPalettesByPopular: async ({
+        page,
+        userToken,
+        filter
+    }: {
+        page: number;
+        userToken?: string;
+        filter: string;
+    }) => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            limit: '10',
+            filter: filter
+        });
+
+        if (userToken) {
+            params.append('User Token', userToken);
+        }
+
+        const url = `${API_URL}/get-popular-colors?${params}`;
+        console.log("🌐 Fetching:", url); // Debug log
+
+        // const response = await axios.get()
+
+        const response = await fetch(url);
+
+        if (!response.ok) throw new Error('Failed to fetch palettes');
+        return response.json();
+    },
+
     // Get color palette by ID
     getColorPaletteById: async (id: string, userToken?: string) => {
         try {

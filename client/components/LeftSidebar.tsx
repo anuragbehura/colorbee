@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Flame, Heart, Shuffle, Sparkle } from "lucide-react";
 import { Separator } from "./ui/separator";
+import { ScrollArea } from "./ui/scroll-area";
 
 export const LeftSidebar = () => {
     const pathname = usePathname();
@@ -27,7 +28,7 @@ export const LeftSidebar = () => {
     const activeSection = pathname === "/" ? "new" : pathname.slice(1);
 
     return (
-        <div className="h-full py-6">
+        <div className="h-full py-6 overflow-hidden">
             <nav className="px-4 space-y-4">
                 <div className="space-y-1">
                     {sidebarSections.map(({ name, icon: Icon }) => (
@@ -52,7 +53,7 @@ export const LeftSidebar = () => {
 
                 <Separator className="my-4" />
 
-                <div className="space-y-1">
+                <ScrollArea className="h-[500px] space-y-1">
                     {collectionOptions.map((collection) => (
                         <Link
                             key={collection}
@@ -65,7 +66,7 @@ export const LeftSidebar = () => {
                             {collection}
                         </Link>
                     ))}
-                </div>
+                </ScrollArea>
             </nav>
         </div>
     );

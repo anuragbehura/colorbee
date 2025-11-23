@@ -66,7 +66,7 @@ const LikedPalettesRightSide: React.FC<LikedPalettesRightSideProps> = ({
             >
                 <X className="h-4 w-4 text-gray-700" />
             </Button>
-            {/* <div className="flex items-center justify-between px-1">
+            <div className="flex items-center justify-between px-1">
                 <Button
                     onClick={handleLike}
                     variant="outline"
@@ -83,7 +83,7 @@ const LikedPalettesRightSide: React.FC<LikedPalettesRightSideProps> = ({
                     />
                     <span className="text-sm">{liveLikes}</span>
                 </Button>
-            </div> */}
+            </div>
         </div>
     );
 };

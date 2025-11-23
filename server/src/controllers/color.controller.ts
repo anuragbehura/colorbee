@@ -159,6 +159,7 @@ export const getColorPaletteById = async (req: Request, res: Response) => {
 };
 
 // Controller for get liked palletes by user
+// Controller for get liked palletes by user
 export const likedColorPalettes = async (req: Request, res: Response) => {
     try {
         const userToken = req.query.userToken as string || req.headers['user-token'] as string;
@@ -168,7 +169,7 @@ export const likedColorPalettes = async (req: Request, res: Response) => {
         }
 
         // Find all likes for this user
-        const likes = await Like.find({userToken}).lean();
+        const likes = await Like.find({ userToken }).lean();
 
         if (!likes || likes.length === 0) {
             return res.status(200).json({ palettes: [] });
@@ -181,25 +182,36 @@ export const likedColorPalettes = async (req: Request, res: Response) => {
         const palettes = await Color.find({ _id: { $in: paletteIds } }).lean();
 
         // Fetch usernames in a single query
-        const userIds = [...new Set(palettes.map(palette => palette.userId.toString()))];
+        const userIds = [...new Set(
+            palettes
+                .filter(palette => palette.userId) // OK, this filters for userId collection
+                .map(palette => palette.userId.toString()))];
         const users = await User.find({ _id: { $in: userIds } }, "username").lean();
         const userMap = Object.fromEntries(users.map(user => [user._id.toString(), user.username]));
 
         // Format response with isLiked: true for all palettes
-        const formattedPalettes = palettes.map(palette => ({
-            id: palette._id,
-            username: userMap[palette.userId.toString()] || "Unknown User",
-            colors: palette.colors,
-            createdAt: palette.createdAt,
-            likes: palette.likes,
-            isLiked: true // IMPORTANT: All palettes in this list are liked
-        }));
+        const formattedPalettes = palettes.map(palette => {
+            // Check if userId exists before calling toString()
+            const creatorUsername = palette.userId
+                ? userMap[palette.userId.toString()] || "Unknown User"
+                : "Unknown User (ID Missing)";
+
+            return {
+                id: palette._id,
+                username: creatorUsername,
+                colors: palette.colors,
+                createdAt: palette.createdAt,
+                likes: palette.likes,
+                isLiked: true
+            }
+        });
 
         return res.status(200).json({
             palettes: formattedPalettes
         })
     } catch (error) {
-        
+        console.error("Error fetching liked palettes:", error);
+        return res.status(500).json({ message: "Internal server error" });
     }
 }
 

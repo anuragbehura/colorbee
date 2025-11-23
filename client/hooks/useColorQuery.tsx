@@ -43,6 +43,8 @@ export const useColorQuery = () => {
             queryKey: ["likedPalletes", userToken],
             queryFn: () => colorApi.likedColorPalettes(userToken),
             enabled: !!userToken, // Only run query if userToken is avilable
+            staleTime: 0,
+            gcTime: 1000 * 60 * 5, // 5 minutes
         })
     };
 
